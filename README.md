@@ -8,6 +8,8 @@ A [kaocha](https://github.com/lambdaisland/kaocha) plugin that reports who touch
 
 [![Clojars Project](https://img.shields.io/clojars/v/gitcha.svg)](https://clojars.org/gitcha)
 
+gitcha assumes that the [git client](https://git-scm.com/downloads) is installed.
+
 In your `project.clj`, 
 ```
 :dependencies [[gitcha "0.1.0-SNAPSHOT"]
