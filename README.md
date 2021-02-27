@@ -6,6 +6,8 @@ A [kaocha](https://github.com/lambdaisland/kaocha) plugin that reports who touch
 
 ## Usage
 
+[![Clojars Project](https://img.shields.io/clojars/v/gitcha.svg)](https://clojars.org/gitcha)
+
 In your `project.clj`, 
 ```
 :dependencies [[gitcha "0.1.0-SNAPSHOT"]
