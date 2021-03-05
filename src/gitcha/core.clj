@@ -3,8 +3,8 @@
             [kaocha.result :as result]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.java.shell :as sh]))
-
+            [clojure.java.shell :as sh]
+            [clojure.java.classpath :as cp]))
 
 (defn filepath-for [ns-name]
   (.getFile (or (io/resource (str (.. (name ns-name)
@@ -66,7 +66,46 @@
       (print-authors-of filepath))
     result))
 
+(def gitcha-suppress-warning "gitcha-suppress-warning")
+
+(def cmd-option (str "--" gitcha-suppress-warning))
+
+(defn warn-on-possibly-incompatible-kaocha-version
+  []
+  (let [tested-with-these-kaocha-versions
+        #{"1.0.726"}
+
+        kaocha-version-on-classpath
+        (some->> (cp/classpath)
+                 (map #(.getName %))
+                 (filter (partial re-matches #"kaocha-.*\.jar"))
+                 first
+                 (re-matches #"kaocha-(.*)\.jar")
+                 second)]
+    (when-not (contains? tested-with-these-kaocha-versions
+                         kaocha-version-on-classpath)
+      (println "---")
+      (println "You are using a version of kaocha that has not been tested with the gitcha plugin.")
+      (println "Things might break. Or they mightn't. Proceed with caution!")
+      (println "Your version of kaocha is" kaocha-version-on-classpath)
+      (println "gitcha has been tested with the following versions of kaocha:" (str/join ", " tested-with-these-kaocha-versions))
+      (println "To suppress this warning, add ':gitcha.core/suppress-warning? true' to your tests.edn,")
+      (println "or, if you are calling from the command line, add the following option:" cmd-option)
+      (println "---"))))
+
+
+
 (p/defplugin gitcha.core/plugin
              "my-docstring"
+             (cli-options [opts]
+                          (conj opts [nil cmd-option "Suppresses gitcha's kaocha version warning. Defaults to false"]))
+             (config [{:kaocha/keys [cli-options] :as config}]
+                     (assoc config
+                       ::suppress-warning?
+                       ((keyword gitcha-suppress-warning) cli-options (::suppress-warning? config false))))
+             (pre-run [test-plan]
+                      (when-not (::suppress-warning? test-plan)
+                        (warn-on-possibly-incompatible-kaocha-version))
+                      test-plan)
              (post-summary [test-result]
                            (test-ns-owners-report test-result)))
